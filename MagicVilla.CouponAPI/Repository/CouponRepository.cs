@@ -14,5 +14,9 @@ namespace MagicVilla.CouponAPI.Repository
 
         public Task<Coupon> GetAsync(string text) 
             => dbSet.Where(q => q.Name.ToLower() == text.ToLower()).FirstOrDefaultAsync();
+
+        public async Task<IEnumerable<Coupon>> GetSpecialAsync(string text, int pageSize, int currentPage)
+            => await dbSet.Where(q => q.Name.ToLower().Contains(text))
+            .Skip(pageSize * (currentPage -1)).Take(pageSize).ToListAsync();
     }
 }
