@@ -4,6 +4,7 @@ using MagicVilla.CouponAPI.Models;
 using MagicVilla.CouponAPI.Models.DTO;
 using MagicVilla.CouponAPI.Repository.Contracts;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System.Net;
 
 namespace MagicVilla.CouponAPI.Endpoints
@@ -20,7 +21,28 @@ namespace MagicVilla.CouponAPI.Endpoints
                 .WithName("GetCouponSpecial").Produces<APIResponse>(StatusCodes.Status200OK);
 
             app.MapGet("/api/coupon/{id:int}", GetCoupon)
-                .WithName("GetCoupon").Produces<APIResponse>(StatusCodes.Status200OK);
+                .WithName("GetCoupon").Produces<APIResponse>(StatusCodes.Status200OK)
+                .AddEndpointFilter(async(context, next) =>
+                {
+                    var id = context.GetArgument<int>(1);
+                    if (id == 0)
+                        return Results.BadRequest("Invalid id");
+
+                    Console.WriteLine("Before 1st filter");
+                    var result = await next(context);
+                    Console.WriteLine("After 1st filter");
+
+                    return result;
+                })
+                .AddEndpointFilter(async(context, next) =>
+                {
+                    Console.WriteLine("Before 2nd filter");
+                    var result = await next(context);
+                    Console.WriteLine("After 2nd filter");
+
+                    return result;
+                });
+
 
             app.MapPost("/api/coupon", CreateCoupon)
                 .WithName("CreateCoupon").Accepts<CouponCreateDTO>("application/json")
@@ -134,6 +156,7 @@ namespace MagicVilla.CouponAPI.Endpoints
         [Authorize]
         private static async Task<IResult> GetCoupon(ICouponRepository repository, int id)
         {
+            await Console.Out.WriteLineAsync("GetCoupon endpoint");
             var response = new APIResponse
             {
                 IsSuccess = true,
